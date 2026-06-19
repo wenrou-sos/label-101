@@ -176,12 +176,14 @@ function onDataClick(payload) {
   <div v-if="data">
     <v-row>
       <v-col cols="12" md="7">
-        <div class="chart-hint mb-1">出生率与市场规模趋势（粉色带为特殊年份）</div>
+        <div class="chart-hint mb-1">出生率与市场规模趋势（粉色带为特殊年份，点击可下钻）</div>
         <PlotChart
           :data="trendTraces"
           :layout="trendLayout"
-          :chart-title="'出生率波动与市场规模趋势（2010-2024）'"
+          :chart-title="'出生率波动与市场规模趋势（点击年份可下钻）'"
           height="380px"
+          :year-clickable="true"
+          @data-click="onDataClick"
         />
       </v-col>
       <v-col cols="12" md="5">

@@ -15,9 +15,32 @@ def _yoy(df, metric_col, year_col="year"):
     return round((cur - prev) / prev * 100, 1)
 
 
-def get_overview():
+def get_overview(start_year=2010, end_year=2024):
     df = get_consumption().copy()
     df["year"] = pd.to_datetime(df["order_date"]).dt.year
+    df = df[(df["year"] >= start_year) & (df["year"] <= end_year)]
+
+    if len(df) == 0:
+        birth = get_birth_rate()
+        birth = birth[(birth["year"] >= start_year) & (birth["year"] <= end_year)]
+        birth_trend = [
+            {"year": int(r["year"]), "birth_count": int(r["birth_count"]),
+             "special_tag": r["special_tag"]}
+            for _, r in birth.iterrows()
+        ]
+        return {
+            "kpis": [
+                {"key": "total_amount", "label": "总消费额", "value": 0,
+                 "unit": "元", "trend": 0, "icon": "currency-yuan"},
+                {"key": "users", "label": "活跃用户", "value": 0,
+                 "unit": "人", "trend": 0, "icon": "account-group"},
+                {"key": "avg_order", "label": "平均客单价", "value": 0,
+                 "unit": "元", "trend": 0, "icon": "cart"},
+                {"key": "repurchase", "label": "复购率", "value": 0,
+                 "unit": "%", "trend": 0, "icon": "repeat"},
+            ],
+            "birth_trend": birth_trend,
+        }
 
     total_amount = round(float(df["amount"].sum()), 2)
     users = int(df["user_id"].nunique())
@@ -25,24 +48,29 @@ def get_overview():
     order_counts = df.groupby("user_id").size()
     repurchase = round(float((order_counts > 1).mean() * 100), 1)
 
-    # 同比趋势
-    total_trend = _yoy(df, "amount")
-    user_trend = round(
-        (df[df["year"] == df["year"].max()]["user_id"].nunique()
-         - df[df["year"] == df["year"].max() - 1]["user_id"].nunique())
-        / df[df["year"] == df["year"].max() - 1]["user_id"].nunique() * 100, 1)
-    avg_trend = round(
-        (df[df["year"] == df["year"].max()]["amount"].mean()
-         - df[df["year"] == df["year"].max() - 1]["amount"].mean())
-        / df[df["year"] == df["year"].max() - 1]["amount"].mean() * 100, 1)
-
-    # 复购率同比：计算最近两年各年的复购率
-    latest_year = int(df["year"].max())
-    cur_counts = df[df["year"] == latest_year].groupby("user_id").size()
-    prev_counts = df[df["year"] == latest_year - 1].groupby("user_id").size()
-    cur_repurchase = float((cur_counts > 1).mean() * 100) if len(cur_counts) > 0 else 0.0
-    prev_repurchase = float((prev_counts > 1).mean() * 100) if len(prev_counts) > 0 else 0.0
-    repurchase_trend = round(cur_repurchase - prev_repurchase, 1)
+    years_available = sorted(df["year"].unique())
+    if len(years_available) >= 2:
+        latest = years_available[-1]
+        prev = years_available[-2]
+        total_trend = _yoy(df, "amount")
+        user_trend = round(
+            (df[df["year"] == latest]["user_id"].nunique()
+             - df[df["year"] == prev]["user_id"].nunique())
+            / max(df[df["year"] == prev]["user_id"].nunique(), 1) * 100, 1)
+        avg_trend = round(
+            (df[df["year"] == latest]["amount"].mean()
+             - df[df["year"] == prev]["amount"].mean())
+            / max(df[df["year"] == prev]["amount"].mean(), 1) * 100, 1)
+        cur_counts = df[df["year"] == latest].groupby("user_id").size()
+        prev_counts = df[df["year"] == prev].groupby("user_id").size()
+        cur_repurchase = float((cur_counts > 1).mean() * 100) if len(cur_counts) > 0 else 0.0
+        prev_repurchase = float((prev_counts > 1).mean() * 100) if len(prev_counts) > 0 else 0.0
+        repurchase_trend = round(cur_repurchase - prev_repurchase, 1)
+    else:
+        total_trend = 0
+        user_trend = 0
+        avg_trend = 0
+        repurchase_trend = 0
 
     kpis = [
         {"key": "total_amount", "label": "总消费额", "value": total_amount,
@@ -56,6 +84,7 @@ def get_overview():
     ]
 
     birth = get_birth_rate()
+    birth = birth[(birth["year"] >= start_year) & (birth["year"] <= end_year)]
     birth_trend = [
         {"year": int(r["year"]), "birth_count": int(r["birth_count"]),
          "special_tag": r["special_tag"]}

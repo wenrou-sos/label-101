@@ -25,8 +25,14 @@ def _kaplan_meier(stays, events, max_month=24):
     return [{"month": m, "survival": sv} for m, sv in zip(months, survival)]
 
 
-def get_loyalty_survival():
-    df = get_brand_loyalty()
+def get_loyalty_survival(start_year=2010, end_year=2024):
+    df = get_brand_loyalty().copy()
+    df["switch_year"] = pd.to_datetime(df["switch_to_date"]).dt.year
+    df = df[
+        (df["switch_year"].isna()) |
+        ((df["switch_year"] >= start_year) & (df["switch_year"] <= end_year))
+    ]
+
     survival_curves = {}
     brand_stay = {}
     for cat in CATEGORIES:

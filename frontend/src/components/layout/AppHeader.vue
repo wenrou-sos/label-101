@@ -1,4 +1,6 @@
 <script setup>
+import YearRangePicker from './YearRangePicker.vue'
+
 defineProps({
   loading: { type: Boolean, default: false },
 })
@@ -18,13 +20,14 @@ const emit = defineEmits(['refresh'])
         </div>
       </div>
       <v-spacer />
-      <div class="d-none d-md-flex align-center me-3">
-        <v-chip variant="tonal" color="primary" size="small" class="me-2">
-          <v-icon start icon="mdi-calendar-range" size="15" />2010 — 2024
-        </v-chip>
+      <div class="d-none d-md-flex align-center me-3 gap-3">
+        <YearRangePicker />
         <v-chip variant="tonal" color="secondary" size="small">
           <v-icon start icon="mdi-database" size="15" />模拟数据集
         </v-chip>
+      </div>
+      <div class="d-flex d-md-none align-center me-2">
+        <YearRangePicker />
       </div>
       <v-btn
         variant="flat"

@@ -8,10 +8,12 @@ IMPACT_CATEGORIES = ["奶粉", "纸尿裤", "辅食", "营养品",
                      "婴儿车", "安全座椅", "玩具"]
 
 
-def get_special_year_impact():
+def get_special_year_impact(start_year=2010, end_year=2024):
     birth = get_birth_rate().sort_values("year")
+    birth = birth[(birth["year"] >= start_year) & (birth["year"] <= end_year)]
     df = get_consumption().copy()
     df["year"] = pd.to_datetime(df["order_date"]).dt.year
+    df = df[(df["year"] >= start_year) & (df["year"] <= end_year)]
 
     # 出生率趋势与同比
     birth_trend = []
@@ -42,15 +44,18 @@ def get_special_year_impact():
         prev_ms = val
 
     # 特殊年份对细分品类的影响（该年该品类销售额同比变化）
+    all_years = sorted(df["year"].unique())
     category_impact = []
-    for sy in [2012, 2020, 2021, 2022, 2024]:
+    for sy in all_years:
+        if sy - 1 not in all_years:
+            continue
         cur = df[df["year"] == sy]
         prv = df[df["year"] == sy - 1]
         items = []
         for cat in IMPACT_CATEGORIES:
             c_amt = float(cur[cur["category"] == cat]["amount"].sum())
             p_amt = float(prv[prv["category"] == cat]["amount"].sum())
-            yoy = round((c_amt - p_amt) / p_amt * 100, 1) if p_amt else 0.0
+            yoy = round((c_amt - p_amt) / max(p_amt, 1) * 100, 1) if p_amt else 0.0
             items.append({"category": cat, "yoy": yoy,
                           "amount": round(c_amt, 2)})
         category_impact.append({"year": sy, "items": items})

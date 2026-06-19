@@ -5,32 +5,39 @@ const http = axios.create({
   timeout: 30000,
 })
 
-export async function getOverview() {
-  const { data } = await http.get('/overview')
+function buildParams(params = {}) {
+  const result = {}
+  if (params.start_year !== undefined) result.start_year = params.start_year
+  if (params.end_year !== undefined) result.end_year = params.end_year
+  return result
+}
+
+export async function getOverview(params = {}) {
+  const { data } = await http.get('/overview', { params: buildParams(params) })
   return data.data
 }
 
-export async function getAgeStageConsumption() {
-  const { data } = await http.get('/age-stage/consumption')
+export async function getAgeStageConsumption(params = {}) {
+  const { data } = await http.get('/age-stage/consumption', { params: buildParams(params) })
   return data.data
 }
 
-export async function getCategoryDecisionFactors() {
-  const { data } = await http.get('/category/decision-factors')
+export async function getCategoryDecisionFactors(params = {}) {
+  const { data } = await http.get('/category/decision-factors', { params: buildParams(params) })
   return data.data
 }
 
-export async function getCityTierComparison() {
-  const { data } = await http.get('/city-tier/comparison')
+export async function getCityTierComparison(params = {}) {
+  const { data } = await http.get('/city-tier/comparison', { params: buildParams(params) })
   return data.data
 }
 
-export async function getLoyaltySurvival() {
-  const { data } = await http.get('/loyalty/survival')
+export async function getLoyaltySurvival(params = {}) {
+  const { data } = await http.get('/loyalty/survival', { params: buildParams(params) })
   return data.data
 }
 
-export async function getSpecialYearImpact() {
-  const { data } = await http.get('/special-year/impact')
+export async function getSpecialYearImpact(params = {}) {
+  const { data } = await http.get('/special-year/impact', { params: buildParams(params) })
   return data.data
 }

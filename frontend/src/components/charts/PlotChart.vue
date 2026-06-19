@@ -11,6 +11,7 @@ const props = defineProps({
   chartTitle: { type: String, default: '' },
   clickable: { type: Boolean, default: false },
   clickDimension: { type: String, default: 'category' },
+  yearClickable: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['data-click'])
@@ -42,12 +43,41 @@ function extractCategoryFromClick(point) {
   return null
 }
 
+function extractYearFromClick(point) {
+  const sources = [
+    point?.x,
+    point?.label,
+    point?.y,
+    point?.fullData?.labels?.[point.pointNumber],
+  ]
+  for (const s of sources) {
+    if (typeof s === 'number' && s >= 2010 && s <= 2030) return s
+    if (typeof s === 'string') {
+      const match = s.match(/20\d{2}/)
+      if (match) return parseInt(match[0])
+    }
+  }
+  return null
+}
+
 function onPlotClick(event) {
-  if (!props.clickable || !event?.points?.length) return
+  if (!event?.points?.length) return
   const point = event.points[0]
-  const category = extractCategoryFromClick(point)
-  if (category) {
-    emit('data-click', { dimension: props.clickDimension, value: category, point })
+
+  if (props.clickable) {
+    const category = extractCategoryFromClick(point)
+    if (category) {
+      emit('data-click', { dimension: props.clickDimension, value: category, point })
+      return
+    }
+  }
+
+  if (props.yearClickable) {
+    const year = extractYearFromClick(point)
+    if (year) {
+      emit('data-click', { dimension: 'year', value: year, point })
+      return
+    }
   }
 }
 
@@ -68,7 +98,7 @@ function render() {
     ...PLOT_CONFIG,
     ...props.config,
   }).then(() => {
-    if (props.clickable) bindEvents()
+    if (props.clickable || props.yearClickable) bindEvents()
   })
 }
 
@@ -139,7 +169,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="plot-wrapper" :class="{ 'is-clickable': clickable }">
+  <div class="plot-wrapper" :class="{ 'is-clickable': clickable || yearClickable }">
     <div ref="el" class="plot-area" :style="{ height }"></div>
     <v-btn
       v-if="clickable"
@@ -151,6 +181,17 @@ onBeforeUnmount(() => {
     >
       <v-icon icon="mdi-filter-variant-plus" size="12" />
       <span>可筛选</span>
+    </v-btn>
+    <v-btn
+      v-if="yearClickable && !clickable"
+      class="hint-badge year-badge"
+      variant="flat"
+      size="x-small"
+      density="compact"
+      :title="'点击年份可下钻查看'"
+    >
+      <v-icon icon="mdi-magnify-plus-outline" size="12" />
+      <span>可下钻</span>
     </v-btn>
     <v-btn
       class="fullscreen-btn"
@@ -220,6 +261,11 @@ onBeforeUnmount(() => {
   z-index: 3;
   height: 24px;
   pointer-events: none;
+}
+.hint-badge.year-badge {
+  color: #64B5F6 !important;
+  left: auto;
+  right: 60px;
 }
 .fullscreen-btn {
   position: absolute;

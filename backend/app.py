@@ -6,7 +6,7 @@
 import os
 import sys
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -25,6 +25,19 @@ from services import (  # noqa: E402
 app = Flask(__name__)
 CORS(app)
 
+MIN_YEAR = 2010
+MAX_YEAR = 2024
+
+
+def get_year_range():
+    start = request.args.get("start_year", type=int, default=MIN_YEAR)
+    end = request.args.get("end_year", type=int, default=MAX_YEAR)
+    start = max(MIN_YEAR, min(start, MAX_YEAR))
+    end = max(MIN_YEAR, min(end, MAX_YEAR))
+    if start > end:
+        start, end = end, start
+    return start, end
+
 
 @app.errorhandler(500)
 def handle_500(e):
@@ -33,37 +46,43 @@ def handle_500(e):
 
 @app.route("/api/health")
 def health():
-    return ok({"status": "ok"})
+    return ok({"status": "ok", "min_year": MIN_YEAR, "max_year": MAX_YEAR})
 
 
 @app.route("/api/overview")
 def overview():
-    return ok(overview_service.get_overview())
+    start, end = get_year_range()
+    return ok(overview_service.get_overview(start, end))
 
 
 @app.route("/api/age-stage/consumption")
 def age_stage_consumption():
-    return ok(age_stage_service.get_age_stage_consumption())
+    start, end = get_year_range()
+    return ok(age_stage_service.get_age_stage_consumption(start, end))
 
 
 @app.route("/api/category/decision-factors")
 def category_decision_factors():
-    return ok(category_service.get_decision_factors())
+    start, end = get_year_range()
+    return ok(category_service.get_decision_factors(start, end))
 
 
 @app.route("/api/city-tier/comparison")
 def city_tier_comparison():
-    return ok(city_tier_service.get_city_tier_comparison())
+    start, end = get_year_range()
+    return ok(city_tier_service.get_city_tier_comparison(start, end))
 
 
 @app.route("/api/loyalty/survival")
 def loyalty_survival():
-    return ok(loyalty_service.get_loyalty_survival())
+    start, end = get_year_range()
+    return ok(loyalty_service.get_loyalty_survival(start, end))
 
 
 @app.route("/api/special-year/impact")
 def special_year_impact():
-    return ok(special_year_service.get_special_year_impact())
+    start, end = get_year_range()
+    return ok(special_year_service.get_special_year_impact(start, end))
 
 
 if __name__ == "__main__":

@@ -9,6 +9,8 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 })
 
+const emit = defineEmits(['data-click'])
+
 const birthTrace = computed(() => {
   const d = props.data
   if (!d) return []
@@ -73,8 +75,10 @@ const birthLayout = computed(() =>
       v-if="data"
       :data="birthTrace"
       :layout="birthLayout"
-      :chart-title="'出生人口趋势（2010-2024）'"
+      :chart-title="'出生人口趋势（点击年份可下钻）'"
       height="360px"
+      :year-clickable="true"
+      @data-click="emit('data-click', $event)"
     />
   </div>
 </template>

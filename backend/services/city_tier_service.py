@@ -9,8 +9,10 @@ TIER_MAP = {"一线城市": "一线城市", "二线城市": "二线城市", "三
 TIERS = ["一线城市", "二线城市", "下沉市场"]
 
 
-def get_city_tier_comparison():
-    df = get_consumption()
+def get_city_tier_comparison(start_year=2010, end_year=2024):
+    df = get_consumption().copy()
+    df["year"] = pd.to_datetime(df["order_date"]).dt.year
+    df = df[(df["year"] >= start_year) & (df["year"] <= end_year)]
     users = get_users()
     tier_user_count = users["city_tier"].map(TIER_MAP).value_counts().to_dict()
 

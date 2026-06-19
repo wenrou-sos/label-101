@@ -5,6 +5,7 @@ import { useDashboardStore } from '../stores/dashboard'
 import AppHeader from '../components/layout/AppHeader.vue'
 import SideNav from '../components/layout/SideNav.vue'
 import SectionCard from '../components/layout/SectionCard.vue'
+import YearRangePicker from '../components/layout/YearRangePicker.vue'
 import OverviewSection from '../components/sections/OverviewSection.vue'
 import AgeStageSection from '../components/sections/AgeStageSection.vue'
 import CategoryDecisionSection from '../components/sections/CategoryDecisionSection.vue'
@@ -59,13 +60,21 @@ function setupObserver() {
 async function refresh() {
   store.loadedAt = null
   store.error = null
-  await store.fetchAll()
+  await store.fetchAll(true)
   await nextTick()
   setupObserver()
 }
 
+function clearAllFilters() {
+  store.clearFilter()
+  store.clearYearFilter()
+}
+
 function handleDataClick(payload) {
-  if (payload?.dimension && payload?.value) {
+  if (!payload?.dimension || !payload?.value) return
+  if (payload.dimension === 'year') {
+    store.setDrillDownYear(payload.value)
+  } else {
     store.setFilter(payload.dimension, payload.value)
   }
 }
@@ -89,34 +98,57 @@ onBeforeUnmount(() => {
       enter-active-class="filter-bar-enter"
       leave-active-class="filter-bar-leave"
     >
-      <div v-if="store.hasActiveFilter" class="filter-bar">
+      <div v-if="store.hasActiveFilter || store.hasYearFilter" class="filter-bar">
         <div class="filter-bar-content">
           <v-icon icon="mdi-filter-variant" size="18" color="#E5704F" />
           <span class="filter-bar-label">当前筛选：</span>
-          <v-chip
-            color="#FFE7DA"
-            class="filter-chip"
-            density="comfortable"
-            size="small"
-          >
-            <v-icon start icon="mdi-tag-outline" size="14" color="#E5704F" />
-            <span class="filter-chip-text">{{ store.activeFilterLabel }}</span>
-            <template #append>
-              <v-btn
-                icon="mdi-close"
-                variant="text"
-                size="x-small"
-                density="compact"
-                @click="store.clearFilter()"
-                class="chip-close-btn"
-              />
-            </template>
-          </v-chip>
+          <template v-if="store.hasYearFilter">
+            <v-chip
+              color="#E8F5E9"
+              class="filter-chip"
+              density="comfortable"
+              size="small"
+            >
+              <v-icon start icon="mdi-calendar" size="14" color="#4CAF50" />
+              <span class="filter-chip-text" style="color: #2E7D32">{{ store.yearFilterLabel }}</span>
+              <template #append>
+                <v-btn
+                  icon="mdi-close"
+                  variant="text"
+                  size="x-small"
+                  density="compact"
+                  @click="store.clearYearFilter()"
+                  class="chip-close-btn"
+                />
+              </template>
+            </v-chip>
+          </template>
+          <template v-if="store.hasActiveFilter">
+            <v-chip
+              color="#FFE7DA"
+              class="filter-chip"
+              density="comfortable"
+              size="small"
+            >
+              <v-icon start icon="mdi-tag-outline" size="14" color="#E5704F" />
+              <span class="filter-chip-text">{{ store.activeFilterLabel }}</span>
+              <template #append>
+                <v-btn
+                  icon="mdi-close"
+                  variant="text"
+                  size="x-small"
+                  density="compact"
+                  @click="store.clearFilter()"
+                  class="chip-close-btn"
+                />
+              </template>
+            </v-chip>
+          </template>
           <v-btn
             variant="text"
             size="small"
             color="#E5704F"
-            @click="store.clearFilter()"
+            @click="clearAllFilters()"
             class="ml-2"
           >
             清除全部筛选
