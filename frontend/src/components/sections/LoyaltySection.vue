@@ -1,0 +1,142 @@
+<script setup>
+import { computed } from 'vue'
+import PlotChart from '../charts/PlotChart.vue'
+import { COLOR, plotLayout } from '../../constants/charts'
+
+const props = defineProps({
+  data: { type: Object, default: null },
+})
+
+const catColor = { 纸尿裤: COLOR.coral, 奶粉: COLOR.mint }
+
+const survivalTraces = computed(() => {
+  const d = props.data
+  if (!d) return []
+  const traces = []
+  for (const cat of d.categories) {
+    const curve = d.survival_curves[cat]
+    traces.push({
+      x: curve.map((p) => p.month),
+      y: curve.map((p) => p.survival),
+      mode: 'lines+markers',
+      name: cat,
+      line: { color: catColor[cat], width: 3, shape: 'spline' },
+      marker: { size: 5, color: catColor[cat] },
+      fill: 'tozeroy',
+      fillcolor: catColor[cat] + '1f',
+      hovertemplate: '<b>' + cat + '</b><br>第 %{x} 月<br>留存率 %{y:.1%}<extra></extra>',
+    })
+  }
+  return traces
+})
+
+const survivalLayout = computed(() =>
+  plotLayout({
+    height: 360,
+    margin: { l: 52, r: 24, t: 16, b: 40 },
+    xaxis: { title: '使用月数', gridcolor: '#F0DDD2', dtick: 3 },
+    yaxis: {
+      title: '品牌留存率',
+      gridcolor: '#F0DDD2',
+      tickformat: '.0%',
+      range: [0, 1.02],
+    },
+    legend: { orientation: 'h', y: 1.12, x: 0.3, font: { size: 12 } },
+    hovermode: 'x unified',
+  })
+)
+
+const switchTrace = computed(() => {
+  const d = props.data
+  if (!d) return []
+  const dist = d.switch_time_distribution
+  return [
+    {
+      x: dist.map((r) => r.range),
+      y: dist.map((r) => r.count),
+      type: 'bar',
+      marker: {
+        color: dist.map((r) => r.count),
+        colorscale: [[0, '#FFD0B8'], [1, '#FF8A65']],
+        line: { color: '#fff', width: 1.5 },
+      },
+      hovertemplate: '<b>%{x}</b><br>换品牌用户 %{y} 人<extra></extra>',
+    },
+  ]
+})
+
+const switchLayout = computed(() =>
+  plotLayout({
+    height: 360,
+    margin: { l: 52, r: 24, t: 16, b: 40 },
+    xaxis: { gridcolor: '#F0DDD2', tickangle: -15 },
+    yaxis: { title: '换品牌人数', gridcolor: '#F0DDD2' },
+    showlegend: false,
+  })
+)
+
+const brandTraces = computed(() => {
+  const d = props.data
+  if (!d) return []
+  const labels = []
+  const values = []
+  const colors = []
+  for (const cat of d.categories) {
+    for (const b of d.brand_stay[cat]) {
+      labels.push(`${b.brand} · ${cat}`)
+      values.push(b.avg_stay_months)
+      colors.push(catColor[cat])
+    }
+  }
+  return [
+    {
+      type: 'bar',
+      orientation: 'h',
+      y: labels,
+      x: values,
+      marker: { color: colors, line: { color: '#fff', width: 1 } },
+      hovertemplate: '<b>%{y}</b><br>平均停留 %{x} 个月<extra></extra>',
+    },
+  ]
+})
+
+const brandLayout = computed(() =>
+  plotLayout({
+    height: 360,
+    margin: { l: 130, r: 24, t: 16, b: 40 },
+    yaxis: { gridcolor: '#F0DDD2', automargin: true, autorange: 'reversed' },
+    xaxis: { title: '平均停留月数', gridcolor: '#F0DDD2' },
+    showlegend: false,
+  })
+)
+</script>
+
+<template>
+  <div v-if="data">
+    <v-row>
+      <v-col cols="12" md="7">
+        <div class="chart-hint mb-1">品牌留存生存曲线（Kaplan-Meier 估计）</div>
+        <PlotChart :data="survivalTraces" :layout="survivalLayout" height="360px" />
+      </v-col>
+      <v-col cols="12" md="5">
+        <div class="chart-hint mb-1">换品牌时间分布</div>
+        <PlotChart :data="switchTrace" :layout="switchLayout" height="360px" />
+      </v-col>
+    </v-row>
+    <v-row class="mt-2">
+      <v-col cols="12">
+        <div class="chart-hint mb-1">各品牌平均停留时长</div>
+        <PlotChart :data="brandTraces" :layout="brandLayout" height="360px" />
+      </v-col>
+    </v-row>
+  </div>
+  <v-skeleton-loader v-else type="image" height="360" />
+</template>
+
+<style scoped>
+.chart-hint {
+  font-size: 0.82rem;
+  color: var(--c-ink-soft);
+  font-weight: 500;
+}
+</style>
