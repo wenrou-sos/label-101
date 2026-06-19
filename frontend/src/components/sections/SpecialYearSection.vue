@@ -15,7 +15,6 @@ const store = useDashboardStore()
 const trendTraces = computed(() => {
   const d = props.data
   if (!d) return []
-  const filtered = store.sharedFilter.value
   const years = d.market_size.map((r) => r.year)
   const traces = [
     {
@@ -27,29 +26,22 @@ const trendTraces = computed(() => {
       marker: { color: '#FFD9C9', line: { color: '#FFCBB3', width: 1 } },
       hovertemplate: '<b>%{x}年</b><br>市场规模 %{y:,.0f} 元<extra></extra>',
     },
-  ]
-  const birthIsMatch = store.isFilteredCategory('奶粉') || store.isFilteredCategory('纸尿裤')
-  const birthLineWidth = birthIsMatch === true ? 5 : birthIsMatch === false ? 1.5 : 3
-  const birthMarkerSize = birthIsMatch === true ? 11 : birthIsMatch === false ? 5 : 8
-  const birthOpacity = birthIsMatch === false ? 0.4 : 1
-  const birthDash = birthIsMatch === false ? 'dash' : 'solid'
-  traces.push({
-    type: 'scatter',
-    mode: 'lines+markers',
-    x: d.birth_trend.map((r) => r.year),
-    y: d.birth_trend.map((r) => r.birth_count),
-    name: '出生人口（万）',
-    yaxis: 'y',
-    line: { color: COLOR.coral, width: birthLineWidth, shape: 'spline', dash: birthDash },
-    marker: {
-      size: birthMarkerSize,
-      color: d.birth_trend.map((r) => (r.special_tag ? COLOR.rose : COLOR.coral)),
-      line: { color: '#fff', width: 2 },
-      opacity: birthOpacity,
+    {
+      type: 'scatter',
+      mode: 'lines+markers',
+      x: d.birth_trend.map((r) => r.year),
+      y: d.birth_trend.map((r) => r.birth_count),
+      name: '出生人口（万）',
+      yaxis: 'y',
+      line: { color: COLOR.coral, width: 3, shape: 'spline' },
+      marker: {
+        size: 8,
+        color: d.birth_trend.map((r) => (r.special_tag ? COLOR.rose : COLOR.coral)),
+        line: { color: '#fff', width: 2 },
+      },
+      hovertemplate: '<b>%{x}年</b><br>出生 %{y} 万<extra></extra>',
     },
-    opacity: birthOpacity,
-    hovertemplate: '<b>%{x}年</b><br>出生 %{y} 万<extra></extra>',
-  })
+  ]
   return traces
 })
 

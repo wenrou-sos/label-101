@@ -81,14 +81,7 @@ const donutLayout = computed(() => {
 const trendTrace = computed(() => {
   const d = props.data
   if (!d) return []
-  const filtered = store.sharedFilter.value
   const barColors = d.avg_order_trend.map((_, i) => PALETTE[i % PALETTE.length])
-  const lineWidths = filtered
-    ? d.avg_order_trend.map((r) => (store.isFilteredCategory(r.stage) ? 3 : 1))
-    : d.avg_order_trend.map(() => 1.5)
-  const opacities = filtered
-    ? d.avg_order_trend.map((r) => (store.isFilteredCategory(r.stage) ? 1 : 0.4))
-    : d.avg_order_trend.map(() => 1)
   return [
     {
       x: d.avg_order_trend.map((r) => r.stage),
@@ -96,27 +89,19 @@ const trendTrace = computed(() => {
       type: 'bar',
       marker: {
         color: barColors,
-        line: { color: '#fff', width: lineWidths },
+        line: { color: '#fff', width: 1.5 },
         radius: 8,
       },
-      opacity: opacities,
       hovertemplate: '<b>%{x}</b><br>客单价 %{y:.0f} 元<extra></extra>',
     },
   ]
 })
 
 const trendLayout = computed(() => {
-  const d = props.data
-  const filtered = store.sharedFilter.value
-  const tickfont = d?.avg_order_trend?.map?.((r) => ({
-    size: filtered ? (store.isFilteredCategory(r.stage) ? 13 : 10) : 11,
-    color: filtered ? (store.isFilteredCategory(r.stage) ? '#E5704F' : '#6d5546') : '#6d5546',
-    weight: filtered ? (store.isFilteredCategory(r.stage) ? 'bold' : 'normal') : 'normal',
-  }))
   return plotLayout({
     height: 380,
     margin: { l: 56, r: 24, t: 20, b: 40 },
-    xaxis: { gridcolor: '#F0DDD2', zeroline: false, tickfont },
+    xaxis: { gridcolor: '#F0DDD2', zeroline: false },
     yaxis: { title: '客单价（元）', gridcolor: '#F0DDD2', zeroline: false },
     showlegend: false,
   })
@@ -160,8 +145,6 @@ function onDataClick(payload) {
           :layout="trendLayout"
           :chart-title="'各月龄阶段客单价趋势'"
           height="380px"
-          :clickable="true"
-          @data-click="onDataClick"
         />
       </v-col>
     </v-row>

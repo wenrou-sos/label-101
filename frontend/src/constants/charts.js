@@ -35,7 +35,10 @@ export const ALL_CATEGORIES = [
   '童装',
   '玩具',
   '辅食',
-  '婴儿洗护',
+  '洗护用品',
+  '服饰',
+  '营养品',
+  '待产包',
 ]
 
 export const CATEGORY_LABEL_MAP = {
@@ -47,7 +50,11 @@ export const CATEGORY_LABEL_MAP = {
   '童装': '童装',
   '玩具': '玩具',
   '辅食': '辅食',
-  '婴儿洗护': '婴儿洗护',
+  '洗护用品': '洗护用品',
+  '婴儿洗护': '洗护用品',
+  '服饰': '服饰',
+  '营养品': '营养品',
+  '待产包': '待产包',
 }
 
 export const PLOT_FONT = {
