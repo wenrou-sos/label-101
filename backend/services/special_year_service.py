@@ -20,16 +20,19 @@ def get_special_year_impact(start_year=2010, end_year=2024):
     prev = None
     for _, r in birth.iterrows():
         bc = int(r["birth_count"])
-        yoy = round((bc - prev) / prev * 100, 1) if prev else 0.0
+        yoy = round(float((bc - prev) / prev * 100), 1) if prev and prev > 0 else 0.0
+        tag = r["special_tag"] if pd.notna(r["special_tag"]) else ""
         birth_trend.append({
-            "year": int(r["year"]), "birth_count": bc,
-            "special_tag": r["special_tag"], "yoy": yoy,
+            "year": int(r["year"]),
+            "birth_count": int(bc),
+            "special_tag": str(tag),
+            "yoy": float(yoy),
         })
         prev = bc
 
     special_years = [
-        {"year": int(r["year"]), "tag": r["special_tag"]}
-        for _, r in birth[birth["special_tag"] != ""].iterrows()
+        {"year": int(r["year"]), "tag": str(r["special_tag"]) if pd.notna(r["special_tag"]) else ""}
+        for _, r in birth[birth["special_tag"].fillna("") != ""].iterrows()
     ]
 
     # 市场规模趋势（消费总额）与同比
@@ -37,14 +40,16 @@ def get_special_year_impact(start_year=2010, end_year=2024):
     market_size = []
     prev_ms = None
     for year, val in ms.items():
-        yoy = round((val - prev_ms) / prev_ms * 100, 1) if prev_ms else 0.0
+        yoy = round(float((val - prev_ms) / prev_ms * 100), 1) if prev_ms and prev_ms > 0 else 0.0
         market_size.append({
-            "year": int(year), "market_size": round(float(val), 2), "yoy": yoy,
+            "year": int(year),
+            "market_size": round(float(val), 2),
+            "yoy": float(yoy),
         })
         prev_ms = val
 
     # 特殊年份对细分品类的影响（该年该品类销售额同比变化）
-    all_years = sorted(df["year"].unique())
+    all_years = sorted(int(y) for y in df["year"].unique())
     category_impact = []
     for sy in all_years:
         if sy - 1 not in all_years:
@@ -53,17 +58,20 @@ def get_special_year_impact(start_year=2010, end_year=2024):
         prv = df[df["year"] == sy - 1]
         items = []
         for cat in IMPACT_CATEGORIES:
-            c_amt = float(cur[cur["category"] == cat]["amount"].sum())
-            p_amt = float(prv[prv["category"] == cat]["amount"].sum())
-            yoy = round((c_amt - p_amt) / max(p_amt, 1) * 100, 1) if p_amt else 0.0
-            items.append({"category": cat, "yoy": yoy,
-                          "amount": round(c_amt, 2)})
-        category_impact.append({"year": sy, "items": items})
+            c_amt = float(cur[cur["category"] == cat]["amount"].sum()) if len(cur) > 0 else 0.0
+            p_amt = float(prv[prv["category"] == cat]["amount"].sum()) if len(prv) > 0 else 0.0
+            yoy = round(float((c_amt - p_amt) / max(p_amt, 1) * 100), 1) if p_amt > 0 else 0.0
+            items.append({
+                "category": str(cat),
+                "yoy": float(yoy),
+                "amount": round(float(c_amt), 2),
+            })
+        category_impact.append({"year": int(sy), "items": items})
 
     return {
         "birth_trend": birth_trend,
         "special_years": special_years,
         "market_size": market_size,
         "category_impact": category_impact,
-        "impact_categories": IMPACT_CATEGORIES,
+        "impact_categories": [str(c) for c in IMPACT_CATEGORIES],
     }

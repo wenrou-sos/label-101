@@ -5,9 +5,13 @@
 """
 import os
 import sys
+import json
 
 from flask import Flask, jsonify, request
+from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS
+import numpy as np
+import pandas as pd
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASE_DIR)
@@ -22,7 +26,29 @@ from services import (  # noqa: E402
     special_year_service,
 )
 
+
+class NumpyJSONProvider(DefaultJSONProvider):
+    """自定义 JSON Provider，支持 numpy/pandas 类型。"""
+
+    @staticmethod
+    def default(obj):
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        if isinstance(obj, (np.ndarray,)):
+            return obj.tolist()
+        if isinstance(obj, (np.bool_,)):
+            return bool(obj)
+        if isinstance(obj, pd.Timestamp):
+            return obj.isoformat()
+        if pd.isna(obj):
+            return None
+        return DefaultJSONProvider.default(obj)
+
+
 app = Flask(__name__)
+app.json = NumpyJSONProvider(app)
 CORS(app)
 
 MIN_YEAR = 2010

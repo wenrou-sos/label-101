@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """城市层级消费差异服务：一线 vs 下沉市场品类偏好与价格带分布。"""
+import pandas as pd
+
 from data_loader import get_consumption, get_users
 
 CATEGORIES = ["奶粉", "纸尿裤", "辅食", "营养品", "婴儿车",
@@ -25,7 +27,7 @@ def get_city_tier_comparison(start_year=2010, end_year=2024):
         row = {"category": cat}
         for tier in TIERS:
             sub = df[(df["category"] == cat) & (df["tier_group"] == tier)]
-            total = float(sub["amount"].sum())
+            total = float(sub["amount"].sum()) if len(sub) > 0 else 0.0
             per_user = round(total / max(tier_user_count.get(tier, 1), 1), 2)
             row[tier] = per_user
         preference.append(row)

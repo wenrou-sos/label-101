@@ -118,6 +118,8 @@ export const useDashboardStore = defineStore('dashboard', {
     },
     clearDrillDown() {
       this.drillDownYear = null
+      this.loadedAt = null
+      return this.fetchAll(true)
     },
     clearYearFilter() {
       this.yearRange = { start: MIN_YEAR, end: MAX_YEAR }
