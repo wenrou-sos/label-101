@@ -73,6 +73,7 @@ const birthLayout = computed(() =>
       v-if="data"
       :data="birthTrace"
       :layout="birthLayout"
+      :chart-title="'出生人口趋势（2010-2024）'"
       height="360px"
     />
   </div>

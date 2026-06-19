@@ -85,7 +85,7 @@ const cards = computed(() => {
               <span class="rank">{{ i + 1 }}</span>{{ t.factor }} {{ t.weight }}%
             </span>
           </div>
-          <PlotChart :data="card.trace" :layout="card.layout" height="280px" />
+          <PlotChart :data="card.trace" :layout="card.layout" :chart-title="card.category + ' · 购买决策因素雷达图'" height="280px" />
         </v-card>
       </v-col>
     </v-row>

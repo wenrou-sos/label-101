@@ -133,11 +133,11 @@ const impactLayout = computed(() =>
     <v-row>
       <v-col cols="12" md="7">
         <div class="chart-hint mb-1">出生率与市场规模趋势（粉色带为特殊年份）</div>
-        <PlotChart :data="trendTraces" :layout="trendLayout" height="380px" />
+        <PlotChart :data="trendTraces" :layout="trendLayout" :chart-title="'出生率波动与市场规模趋势（2010-2024）'" height="380px" />
       </v-col>
       <v-col cols="12" md="5">
         <div class="chart-hint mb-1">特殊年份细分品类同比影响</div>
-        <PlotChart :data="impactTrace" :layout="impactLayout" height="400px" />
+        <PlotChart :data="impactTrace" :layout="impactLayout" :chart-title="'特殊年份对细分品类的同比影响热力图'" height="400px" />
       </v-col>
     </v-row>
   </div>

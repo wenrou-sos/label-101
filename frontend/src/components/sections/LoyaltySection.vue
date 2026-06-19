@@ -116,17 +116,17 @@ const brandLayout = computed(() =>
     <v-row>
       <v-col cols="12" md="7">
         <div class="chart-hint mb-1">品牌留存生存曲线（Kaplan-Meier 估计）</div>
-        <PlotChart :data="survivalTraces" :layout="survivalLayout" height="360px" />
+        <PlotChart :data="survivalTraces" :layout="survivalLayout" :chart-title="'纸尿裤 / 奶粉 品牌留存生存曲线'" height="360px" />
       </v-col>
       <v-col cols="12" md="5">
         <div class="chart-hint mb-1">换品牌时间分布</div>
-        <PlotChart :data="switchTrace" :layout="switchLayout" height="360px" />
+        <PlotChart :data="switchTrace" :layout="switchLayout" :chart-title="'高频消耗品换品牌时间分布'" height="360px" />
       </v-col>
     </v-row>
     <v-row class="mt-2">
       <v-col cols="12">
         <div class="chart-hint mb-1">各品牌平均停留时长</div>
-        <PlotChart :data="brandTraces" :layout="brandLayout" height="360px" />
+        <PlotChart :data="brandTraces" :layout="brandLayout" :chart-title="'各品牌平均停留时长（按月）'" height="360px" />
       </v-col>
     </v-row>
   </div>

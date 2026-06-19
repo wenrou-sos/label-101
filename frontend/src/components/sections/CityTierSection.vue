@@ -92,11 +92,11 @@ const boxLayout = computed(() =>
     <v-row>
       <v-col cols="12" md="6">
         <div class="chart-hint mb-1">品类偏好热力图 · 人均消费（元/人）</div>
-        <PlotChart :data="heatTrace" :layout="heatLayout" height="460px" />
+        <PlotChart :data="heatTrace" :layout="heatLayout" :chart-title="'各城市层级品类偏好热力图'" height="460px" />
       </v-col>
       <v-col cols="12" md="6">
         <div class="chart-hint mb-1">价格带分布箱线图 · 一线 / 二线 / 下沉市场</div>
-        <PlotChart :data="boxTraces" :layout="boxLayout" height="380px" />
+        <PlotChart :data="boxTraces" :layout="boxLayout" :chart-title="'各城市层级品类价格带分布箱线图'" height="380px" />
       </v-col>
     </v-row>
   </div>

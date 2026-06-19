@@ -95,10 +95,10 @@ const trendLayout = computed(() =>
     </div>
     <v-row>
       <v-col cols="12" md="6">
-        <PlotChart :data="donutTrace" :layout="donutLayout" height="380px" />
+        <PlotChart :data="donutTrace" :layout="donutLayout" :chart-title="stages[activeStage] + ' · 类目金额占比'" height="380px" />
       </v-col>
       <v-col cols="12" md="6">
-        <PlotChart :data="trendTrace" :layout="trendLayout" height="380px" />
+        <PlotChart :data="trendTrace" :layout="trendLayout" :chart-title="'各月龄阶段客单价趋势'" height="380px" />
       </v-col>
     </v-row>
   </div>
