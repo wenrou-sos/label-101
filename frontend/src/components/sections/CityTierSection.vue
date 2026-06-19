@@ -11,7 +11,7 @@ const heatTrace = computed(() => {
   const d = props.data
   if (!d) return []
   const cats = d.preference.map((r) => r.category)
-  const z = d.preference.map((r) => [r['一线城市'], r['下沉市场']])
+  const z = d.preference.map((r) => d.tiers.map((t) => r[t]))
   return [
     {
       z,
@@ -47,7 +47,7 @@ const heatLayout = computed(() =>
   })
 )
 
-const tierColor = { 一线城市: COLOR.coral, 下沉市场: COLOR.sky }
+const tierColor = { 一线城市: COLOR.coral, 二线城市: COLOR.mint, 下沉市场: COLOR.sky }
 
 const boxTraces = computed(() => {
   const d = props.data
@@ -95,7 +95,7 @@ const boxLayout = computed(() =>
         <PlotChart :data="heatTrace" :layout="heatLayout" height="460px" />
       </v-col>
       <v-col cols="12" md="6">
-        <div class="chart-hint mb-1">价格带分布箱线图 · 一线 vs 下沉市场</div>
+        <div class="chart-hint mb-1">价格带分布箱线图 · 一线 / 二线 / 下沉市场</div>
         <PlotChart :data="boxTraces" :layout="boxLayout" height="380px" />
       </v-col>
     </v-row>

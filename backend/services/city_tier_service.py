@@ -5,8 +5,8 @@ from data_loader import get_consumption, get_users
 CATEGORIES = ["奶粉", "纸尿裤", "辅食", "营养品", "婴儿车",
               "安全座椅", "儿童安全床", "玩具", "服饰", "洗护用品"]
 
-TIER_MAP = {"一线城市": "一线城市", "三线及以下": "下沉市场"}
-TIERS = ["一线城市", "下沉市场"]
+TIER_MAP = {"一线城市": "一线城市", "二线城市": "二线城市", "三线及以下": "下沉市场"}
+TIERS = ["一线城市", "二线城市", "下沉市场"]
 
 
 def get_city_tier_comparison():

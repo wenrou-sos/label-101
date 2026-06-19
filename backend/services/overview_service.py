@@ -36,6 +36,14 @@ def get_overview():
          - df[df["year"] == df["year"].max() - 1]["amount"].mean())
         / df[df["year"] == df["year"].max() - 1]["amount"].mean() * 100, 1)
 
+    # 复购率同比：计算最近两年各年的复购率
+    latest_year = int(df["year"].max())
+    cur_counts = df[df["year"] == latest_year].groupby("user_id").size()
+    prev_counts = df[df["year"] == latest_year - 1].groupby("user_id").size()
+    cur_repurchase = float((cur_counts > 1).mean() * 100) if len(cur_counts) > 0 else 0.0
+    prev_repurchase = float((prev_counts > 1).mean() * 100) if len(prev_counts) > 0 else 0.0
+    repurchase_trend = round(cur_repurchase - prev_repurchase, 1)
+
     kpis = [
         {"key": "total_amount", "label": "总消费额", "value": total_amount,
          "unit": "元", "trend": total_trend, "icon": "currency-yuan"},
@@ -44,7 +52,7 @@ def get_overview():
         {"key": "avg_order", "label": "平均客单价", "value": avg_order,
          "unit": "元", "trend": avg_trend, "icon": "cart"},
         {"key": "repurchase", "label": "复购率", "value": repurchase,
-         "unit": "%", "trend": 3.4, "icon": "repeat"},
+         "unit": "%", "trend": repurchase_trend, "icon": "repeat"},
     ]
 
     birth = get_birth_rate()
