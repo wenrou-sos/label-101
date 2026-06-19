@@ -14,7 +14,6 @@ const props = defineProps({
 const el = ref(null)
 const fullscreenEl = ref(null)
 const dialog = ref(false)
-const hovered = ref(false)
 
 function render() {
   if (!el.value) return
@@ -90,11 +89,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div
-    class="plot-wrapper"
-    @mouseenter="hovered = true"
-    @mouseleave="hovered = false"
-  >
+  <div class="plot-wrapper">
     <div ref="el" class="plot-area" :style="{ height }"></div>
     <v-btn
       class="fullscreen-btn"
@@ -103,9 +98,9 @@ onBeforeUnmount(() => {
       size="small"
       density="compact"
       @click="openFullscreen"
-      :class="{ 'show': hovered }"
+      :title="chartTitle || '全屏查看'"
     >
-      <v-icon start icon="mdi-fullscreen" size="16" />全屏
+      <v-icon icon="mdi-fullscreen" size="16" />
     </v-btn>
 
     <v-dialog
@@ -148,22 +143,24 @@ onBeforeUnmount(() => {
 }
 .fullscreen-btn {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  opacity: 0;
-  transform: translateY(-4px);
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  min-width: 32px !important;
+  padding: 0 !important;
+  opacity: 0.85;
   transition: opacity 0.2s ease, transform 0.2s ease;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(4px);
-  box-shadow: 0 4px 14px -6px rgba(255, 138, 101, 0.45);
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px -6px rgba(255, 138, 101, 0.5);
   z-index: 3;
   color: #e5704f !important;
-  font-weight: 600;
-  font-size: 0.8rem;
+  border-radius: 10px !important;
 }
-.fullscreen-btn.show {
+.fullscreen-btn:hover {
   opacity: 1;
-  transform: translateY(0);
+  transform: scale(1.06);
 }
 
 .dialog-content-holder {
@@ -247,6 +244,13 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 768px) {
+  .fullscreen-btn {
+    width: 36px;
+    height: 36px;
+    top: 8px;
+    right: 8px;
+    border-radius: 12px !important;
+  }
   .fs-card {
     width: 100%;
     height: 100%;
