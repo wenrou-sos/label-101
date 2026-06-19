@@ -7,6 +7,7 @@ import {
   getLoyaltySurvival,
   getSpecialYearImpact,
 } from '../api'
+import { ALL_CATEGORIES } from '../constants/charts'
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
@@ -19,7 +20,16 @@ export const useDashboardStore = defineStore('dashboard', {
     loading: false,
     error: null,
     loadedAt: null,
+    sharedFilter: {
+      dimension: 'category',
+      value: null,
+    },
   }),
+  getters: {
+    hasActiveFilter: (state) => state.sharedFilter.value !== null,
+    activeFilterLabel: (state) => state.sharedFilter.value || '',
+    allCategories: () => ALL_CATEGORIES,
+  },
   actions: {
     async fetchAll() {
       if (this.loadedAt) return
@@ -54,6 +64,23 @@ export const useDashboardStore = defineStore('dashboard', {
       } finally {
         this.loading = false
       }
+    },
+    setFilter(dimension, value) {
+      if (this.sharedFilter.dimension === dimension && this.sharedFilter.value === value) {
+        this.clearFilter()
+        return
+      }
+      this.sharedFilter = { dimension, value }
+    },
+    clearFilter() {
+      this.sharedFilter = {
+        dimension: 'category',
+        value: null,
+      }
+    },
+    isFilteredCategory(categoryName) {
+      if (!this.sharedFilter.value) return null
+      return this.sharedFilter.value === categoryName
     },
   },
 })

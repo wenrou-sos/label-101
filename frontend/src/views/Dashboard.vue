@@ -64,6 +64,12 @@ async function refresh() {
   setupObserver()
 }
 
+function handleDataClick(payload) {
+  if (payload?.dimension && payload?.value) {
+    store.setFilter(payload.dimension, payload.value)
+  }
+}
+
 onMounted(async () => {
   await store.fetchAll()
   await nextTick()
@@ -79,6 +85,46 @@ onBeforeUnmount(() => {
   <div>
     <AppHeader :loading="store.loading" @refresh="refresh" />
 
+    <transition
+      enter-active-class="filter-bar-enter"
+      leave-active-class="filter-bar-leave"
+    >
+      <div v-if="store.hasActiveFilter" class="filter-bar">
+        <div class="filter-bar-content">
+          <v-icon icon="mdi-filter-variant" size="18" color="#E5704F" />
+          <span class="filter-bar-label">当前筛选：</span>
+          <v-chip
+            color="#FFE7DA"
+            class="filter-chip"
+            density="comfortable"
+            size="small"
+          >
+            <v-icon start icon="mdi-tag-outline" size="14" color="#E5704F" />
+            <span class="filter-chip-text">{{ store.activeFilterLabel }}</span>
+            <template #append>
+              <v-btn
+                icon="mdi-close"
+                variant="text"
+                size="x-small"
+                density="compact"
+                @click="store.clearFilter()"
+                class="chip-close-btn"
+              />
+            </template>
+          </v-chip>
+          <v-btn
+            variant="text"
+            size="small"
+            color="#E5704F"
+            @click="store.clearFilter()"
+            class="ml-2"
+          >
+            清除全部筛选
+          </v-btn>
+        </div>
+      </div>
+    </transition>
+
     <v-navigation-drawer
       v-if="mdAndUp"
       permanent
@@ -89,7 +135,7 @@ onBeforeUnmount(() => {
       <SideNav :sections="sections" :active-id="activeId" @navigate="navigate" />
     </v-navigation-drawer>
 
-    <v-main class="main-area">
+    <v-main class="main-area" :class="{ 'with-filter-bar': store.hasActiveFilter }">
       <v-alert
         v-if="store.error"
         type="error"
@@ -128,7 +174,8 @@ onBeforeUnmount(() => {
           <div class="hero-tags">
             <span class="hero-tag"><v-icon icon="mdi-chart-pie" size="14" />6 月龄阶段</span>
             <span class="hero-tag"><v-icon icon="mdi-shield-check" size="14" />5 核心品类</span>
-            <span class="hero-tag"><v-icon icon="mdi-map" size="14" />2 城市层级</span>
+            <span class="hero-tag"><v-icon icon="mdi-map" size="14" />3 城市层级</span>
+            <span class="hero-tag"><v-icon icon="mdi-filter-variant-plus" size="14" />跨图联动筛选</span>
             <span class="hero-tag"><v-icon icon="mdi-chart-bell-curve" size="14" />生存分析</span>
           </div>
         </section>
@@ -146,12 +193,12 @@ onBeforeUnmount(() => {
             :icon-color="s.color"
             class="mb-6"
           >
-            <OverviewSection v-if="s.id === 'overview'" :data="store.overview" :loading="store.loading" />
-            <AgeStageSection v-else-if="s.id === 'ageStage'" :data="store.ageStage" />
-            <CategoryDecisionSection v-else-if="s.id === 'decision'" :data="store.decision" />
-            <CityTierSection v-else-if="s.id === 'cityTier'" :data="store.cityTier" />
-            <LoyaltySection v-else-if="s.id === 'loyalty'" :data="store.loyalty" />
-            <SpecialYearSection v-else-if="s.id === 'specialYear'" :data="store.specialYear" />
+            <OverviewSection v-if="s.id === 'overview'" :data="store.overview" :loading="store.loading" @data-click="handleDataClick" />
+            <AgeStageSection v-else-if="s.id === 'ageStage'" :data="store.ageStage" @data-click="handleDataClick" />
+            <CategoryDecisionSection v-else-if="s.id === 'decision'" :data="store.decision" @data-click="handleDataClick" />
+            <CityTierSection v-else-if="s.id === 'cityTier'" :data="store.cityTier" @data-click="handleDataClick" />
+            <LoyaltySection v-else-if="s.id === 'loyalty'" :data="store.loyalty" @data-click="handleDataClick" />
+            <SpecialYearSection v-else-if="s.id === 'specialYear'" :data="store.specialYear" @data-click="handleDataClick" />
           </SectionCard>
         </div>
 
@@ -166,6 +213,58 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.filter-bar {
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  background: linear-gradient(180deg, #FFF4EC 0%, #FFEFE6 100%);
+  border-bottom: 1px solid #F0DDD2;
+  box-shadow: 0 4px 16px -8px rgba(255, 138, 101, 0.35);
+}
+.filter-bar-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 10px 24px;
+}
+.filter-bar-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--c-ink);
+}
+.filter-chip {
+  --v-chip-padding: 6px 6px 6px 14px;
+  border-radius: 999px !important;
+  background: #FFE7DA !important;
+  color: var(--c-ink) !important;
+}
+.filter-chip-text {
+  font-weight: 700;
+  color: #E5704F;
+}
+.chip-close-btn {
+  margin-left: 2px !important;
+  color: #E5704F !important;
+  width: 22px !important;
+  height: 22px !important;
+}
+.chip-close-btn:hover {
+  background: rgba(229, 112, 79, 0.15) !important;
+}
+.filter-bar-enter,
+.filter-bar-leave {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filter-bar-enter {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+.filter-bar-leave {
+  opacity: 0;
+  transform: translateY(-100%);
+}
 .side-drawer {
   background: rgba(255, 248, 243, 0.6) !important;
   backdrop-filter: blur(8px);
@@ -173,6 +272,10 @@ onBeforeUnmount(() => {
 }
 .main-area {
   background: transparent;
+  transition: padding-top 0.3s ease;
+}
+.main-area.with-filter-bar {
+  padding-top: 0;
 }
 .content-wrap {
   max-width: 1320px;
@@ -248,5 +351,20 @@ onBeforeUnmount(() => {
 }
 .foot-dot {
   margin: 0 8px;
+}
+@media (max-width: 768px) {
+  .filter-bar {
+    top: 56px;
+  }
+  .filter-bar-content {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+  .nav-chips-mobile {
+    top: 104px;
+  }
+  .with-filter-bar .nav-chips-mobile {
+    top: 152px;
+  }
 }
 </style>

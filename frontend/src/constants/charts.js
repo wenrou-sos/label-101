@@ -26,6 +26,30 @@ export const COLOR = {
   bg: '#FFF8F3',
 }
 
+export const ALL_CATEGORIES = [
+  '婴儿车',
+  '安全座椅',
+  '儿童安全床',
+  '奶粉',
+  '纸尿裤',
+  '童装',
+  '玩具',
+  '辅食',
+  '婴儿洗护',
+]
+
+export const CATEGORY_LABEL_MAP = {
+  '婴儿车': '婴儿车',
+  '安全座椅': '安全座椅',
+  '儿童安全床': '儿童安全床',
+  '奶粉': '奶粉',
+  '纸尿裤': '纸尿裤',
+  '童装': '童装',
+  '玩具': '玩具',
+  '辅食': '辅食',
+  '婴儿洗护': '婴儿洗护',
+}
+
 export const PLOT_FONT = {
   family: "'Noto Sans SC', sans-serif",
   size: 12,

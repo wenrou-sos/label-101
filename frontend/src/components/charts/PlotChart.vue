@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import Plotly from 'plotly.js-dist-min'
-import { PLOT_CONFIG } from '../../constants/charts'
+import { PLOT_CONFIG, ALL_CATEGORIES, CATEGORY_LABEL_MAP } from '../../constants/charts'
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
@@ -9,17 +9,66 @@ const props = defineProps({
   config: { type: Object, default: () => ({}) },
   height: { type: String, default: '440px' },
   chartTitle: { type: String, default: '' },
+  clickable: { type: Boolean, default: false },
+  clickDimension: { type: String, default: 'category' },
 })
+
+const emit = defineEmits(['data-click'])
 
 const el = ref(null)
 const fullscreenEl = ref(null)
 const dialog = ref(false)
 
+function extractCategoryFromClick(point) {
+  const sources = [
+    point?.label,
+    point?.y,
+    point?.x,
+    point?.fullData?.name,
+    point?.curveNumber !== undefined ? props.data[point.curveNumber]?.name : null,
+    point?.fullData?.labels?.[point.pointNumber],
+  ]
+  for (const s of sources) {
+    if (typeof s === 'string' && ALL_CATEGORIES.includes(s)) return s
+    if (typeof s === 'string' && CATEGORY_LABEL_MAP[s]) return CATEGORY_LABEL_MAP[s]
+  }
+  for (const s of sources) {
+    if (typeof s === 'string') {
+      for (const cat of ALL_CATEGORIES) {
+        if (s.includes(cat)) return cat
+      }
+    }
+  }
+  return null
+}
+
+function onPlotClick(event) {
+  if (!props.clickable || !event?.points?.length) return
+  const point = event.points[0]
+  const category = extractCategoryFromClick(point)
+  if (category) {
+    emit('data-click', { dimension: props.clickDimension, value: category, point })
+  }
+}
+
+function bindEvents() {
+  if (!el.value) return
+  el.value.on?.('plotly_click', onPlotClick)
+}
+
+function unbindEvents() {
+  if (!el.value) return
+  el.value.removeListener?.('plotly_click', onPlotClick)
+}
+
 function render() {
   if (!el.value) return
+  unbindEvents()
   Plotly.react(el.value, props.data, props.layout, {
     ...PLOT_CONFIG,
     ...props.config,
+  }).then(() => {
+    if (props.clickable) bindEvents()
   })
 }
 
@@ -83,14 +132,26 @@ watch(
 onBeforeUnmount(() => {
   window.removeEventListener('resize', resize)
   window.removeEventListener('resize', resizeFullscreen)
+  unbindEvents()
   if (el.value) Plotly.purge(el.value)
   if (fullscreenEl.value) Plotly.purge(fullscreenEl.value)
 })
 </script>
 
 <template>
-  <div class="plot-wrapper">
+  <div class="plot-wrapper" :class="{ 'is-clickable': clickable }">
     <div ref="el" class="plot-area" :style="{ height }"></div>
+    <v-btn
+      v-if="clickable"
+      class="hint-badge"
+      variant="flat"
+      size="x-small"
+      density="compact"
+      :title="'点击数据点可联动筛选'"
+    >
+      <v-icon icon="mdi-filter-variant-plus" size="12" />
+      <span>可筛选</span>
+    </v-btn>
     <v-btn
       class="fullscreen-btn"
       variant="flat"
@@ -138,8 +199,27 @@ onBeforeUnmount(() => {
   position: relative;
   width: 100%;
 }
+.plot-wrapper.is-clickable .plot-area {
+  cursor: pointer;
+}
 .plot-area {
   width: 100%;
+}
+.hint-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  opacity: 0.75;
+  background: rgba(255, 255, 255, 0.85) !important;
+  color: #7CB342 !important;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px !important;
+  gap: 3px;
+  border-radius: 999px !important;
+  z-index: 3;
+  height: 24px;
+  pointer-events: none;
 }
 .fullscreen-btn {
   position: absolute;
@@ -250,6 +330,9 @@ onBeforeUnmount(() => {
     top: 8px;
     right: 8px;
     border-radius: 12px !important;
+  }
+  .hint-badge {
+    font-size: 0.6rem;
   }
   .fs-card {
     width: 100%;

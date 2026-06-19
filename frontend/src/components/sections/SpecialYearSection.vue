@@ -2,16 +2,22 @@
 import { computed } from 'vue'
 import PlotChart from '../charts/PlotChart.vue'
 import { COLOR, plotLayout } from '../../constants/charts'
+import { useDashboardStore } from '../../stores/dashboard'
 
 const props = defineProps({
   data: { type: Object, default: null },
 })
 
+const emit = defineEmits(['data-click'])
+
+const store = useDashboardStore()
+
 const trendTraces = computed(() => {
   const d = props.data
   if (!d) return []
+  const filtered = store.sharedFilter.value
   const years = d.market_size.map((r) => r.year)
-  return [
+  const traces = [
     {
       type: 'bar',
       x: years,
@@ -21,22 +27,30 @@ const trendTraces = computed(() => {
       marker: { color: '#FFD9C9', line: { color: '#FFCBB3', width: 1 } },
       hovertemplate: '<b>%{x}年</b><br>市场规模 %{y:,.0f} 元<extra></extra>',
     },
-    {
-      type: 'scatter',
-      mode: 'lines+markers',
-      x: d.birth_trend.map((r) => r.year),
-      y: d.birth_trend.map((r) => r.birth_count),
-      name: '出生人口（万）',
-      yaxis: 'y',
-      line: { color: COLOR.coral, width: 3, shape: 'spline' },
-      marker: {
-        size: 8,
-        color: d.birth_trend.map((r) => (r.special_tag ? COLOR.rose : COLOR.coral)),
-        line: { color: '#fff', width: 2 },
-      },
-      hovertemplate: '<b>%{x}年</b><br>出生 %{y} 万<extra></extra>',
-    },
   ]
+  const birthIsMatch = store.isFilteredCategory('奶粉') || store.isFilteredCategory('纸尿裤')
+  const birthLineWidth = birthIsMatch === true ? 5 : birthIsMatch === false ? 1.5 : 3
+  const birthMarkerSize = birthIsMatch === true ? 11 : birthIsMatch === false ? 5 : 8
+  const birthOpacity = birthIsMatch === false ? 0.4 : 1
+  const birthDash = birthIsMatch === false ? 'dash' : 'solid'
+  traces.push({
+    type: 'scatter',
+    mode: 'lines+markers',
+    x: d.birth_trend.map((r) => r.year),
+    y: d.birth_trend.map((r) => r.birth_count),
+    name: '出生人口（万）',
+    yaxis: 'y',
+    line: { color: COLOR.coral, width: birthLineWidth, shape: 'spline', dash: birthDash },
+    marker: {
+      size: birthMarkerSize,
+      color: d.birth_trend.map((r) => (r.special_tag ? COLOR.rose : COLOR.coral)),
+      line: { color: '#fff', width: 2 },
+      opacity: birthOpacity,
+    },
+    opacity: birthOpacity,
+    hovertemplate: '<b>%{x}年</b><br>出生 %{y} 万<extra></extra>',
+  })
+  return traces
 })
 
 const trendLayout = computed(() => {
@@ -82,6 +96,7 @@ const trendLayout = computed(() => {
 const impactTrace = computed(() => {
   const d = props.data
   if (!d) return []
+  const filtered = store.sharedFilter.value
   const years = d.category_impact.map((c) => c.year)
   const cats = d.impact_categories
   const z = cats.map((cat) =>
@@ -90,12 +105,16 @@ const impactTrace = computed(() => {
       return item ? item.yoy : 0
     })
   )
+  const xgap = filtered ? cats.map((cat) => (store.isFilteredCategory(cat) ? 3 : 1)) : 1
+  const ygap = filtered ? cats.map((cat) => (store.isFilteredCategory(cat) ? 3 : 1)) : 1
   return [
     {
       z,
       x: years.map((y) => String(y)),
       y: cats,
       type: 'heatmap',
+      xgap,
+      ygap,
       colorscale: [
         [0, '#E57373'],
         [0.45, '#FFFFFF'],
@@ -118,14 +137,47 @@ const impactTrace = computed(() => {
   ]
 })
 
-const impactLayout = computed(() =>
-  plotLayout({
+const impactLayout = computed(() => {
+  const d = props.data
+  if (!d) return {}
+  const filtered = store.sharedFilter.value
+  const cats = d.impact_categories
+  const tickfont = cats.map((cat) => ({
+    size: filtered ? (store.isFilteredCategory(cat) ? 13 : 10) : 11,
+    color: filtered ? (store.isFilteredCategory(cat) ? '#E5704F' : '#8d6e63') : '#6d5546',
+    weight: filtered ? (store.isFilteredCategory(cat) ? 'bold' : 'normal') : 'normal',
+  }))
+  const extraShapes = []
+  if (filtered) {
+    cats.forEach((cat, catIdx) => {
+      if (store.isFilteredCategory(cat)) {
+        extraShapes.push({
+          type: 'rect',
+          xref: 'x',
+          yref: 'y',
+          x0: -0.5,
+          x1: 0.48 + d.category_impact.length,
+          y0: catIdx - 0.48,
+          y1: catIdx + 0.48,
+          fillcolor: '#E5704F22',
+          line: { color: '#E5704F', width: 3 },
+          layer: 'above',
+        })
+      }
+    })
+  }
+  return plotLayout({
     height: 400,
     margin: { l: 96, r: 24, t: 16, b: 40 },
-    yaxis: { automargin: true, tickfont: { size: 11 } },
+    yaxis: { automargin: true, tickfont, tickmode: 'array', tickvals: cats.map((_, i) => i), ticktext: cats },
     xaxis: { tickfont: { size: 12, color: '#6d5546' } },
+    shapes: extraShapes,
   })
-)
+})
+
+function onDataClick(payload) {
+  emit('data-click', payload)
+}
 </script>
 
 <template>
@@ -133,11 +185,23 @@ const impactLayout = computed(() =>
     <v-row>
       <v-col cols="12" md="7">
         <div class="chart-hint mb-1">出生率与市场规模趋势（粉色带为特殊年份）</div>
-        <PlotChart :data="trendTraces" :layout="trendLayout" :chart-title="'出生率波动与市场规模趋势（2010-2024）'" height="380px" />
+        <PlotChart
+          :data="trendTraces"
+          :layout="trendLayout"
+          :chart-title="'出生率波动与市场规模趋势（2010-2024）'"
+          height="380px"
+        />
       </v-col>
       <v-col cols="12" md="5">
         <div class="chart-hint mb-1">特殊年份细分品类同比影响</div>
-        <PlotChart :data="impactTrace" :layout="impactLayout" :chart-title="'特殊年份对细分品类的同比影响热力图'" height="400px" />
+        <PlotChart
+          :data="impactTrace"
+          :layout="impactLayout"
+          :chart-title="'特殊年份对细分品类的同比影响热力图'"
+          height="400px"
+          :clickable="true"
+          @data-click="onDataClick"
+        />
       </v-col>
     </v-row>
   </div>
